@@ -620,6 +620,134 @@ run();
   updateRows();
 })();
 
+/* ══ CURSOR LOTO ══ */
+(function(){
+  const style=document.createElement('style');
+  style.textContent='*{cursor:none!important}';
+  document.head.appendChild(style);
+
+  const ns='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(ns,'svg');
+  svg.setAttribute('width','18');svg.setAttribute('height','18');
+  svg.setAttribute('viewBox','0 0 18 18');
+  svg.style.cssText='position:fixed;pointer-events:none;z-index:9999;left:0;top:0;opacity:0;will-change:transform;transition:opacity 0.2s;';
+
+  // Pétalos en terracota — visibles tanto en fondo oscuro como claro
+  for(let i=0;i<8;i++){
+    const p=document.createElementNS(ns,'ellipse');
+    p.setAttribute('cx','9');p.setAttribute('cy','4.5');
+    p.setAttribute('rx','1.4');p.setAttribute('ry','3.8');
+    p.setAttribute('fill','rgba(169,99,85,0.75)');
+    p.setAttribute('stroke','rgba(255,255,255,0.25)');
+    p.setAttribute('stroke-width','0.3');
+    p.setAttribute('transform',`rotate(${i*45},9,9)`);
+    svg.appendChild(p);
+  }
+  // Centro
+  const dot=document.createElementNS(ns,'circle');
+  dot.setAttribute('cx','9');dot.setAttribute('cy','9');dot.setAttribute('r','1.6');
+  dot.setAttribute('fill','rgba(240,232,220,0.95)');
+  svg.appendChild(dot);
+
+  document.body.appendChild(svg);
+
+  let mx=0,my=0,lx=0,ly=0,rot=0,sc=1,tsc=1,vis=false;
+
+  document.addEventListener('mousemove',e=>{
+    mx=e.clientX; my=e.clientY;
+    if(!vis){svg.style.opacity='1';vis=true;}
+  });
+  document.addEventListener('mouseleave',()=>{svg.style.opacity='0';vis=false;});
+  document.querySelectorAll('a,button,.btn-fill,.btn-ow,.btn-od').forEach(el=>{
+    el.addEventListener('mouseenter',()=>tsc=1.7);
+    el.addEventListener('mouseleave',()=>tsc=1);
+  });
+
+  (function loop(){
+    lx+=(mx-lx)*0.12; ly+=(my-ly)*0.12;
+    sc+=(tsc-sc)*0.1;
+    rot+=0.4;
+    svg.style.transform=`translate(calc(${lx}px - 50%), calc(${ly}px - 50%)) rotate(${rot}deg) scale(${sc})`;
+    requestAnimationFrame(loop);
+  })();
+})();
+
+/* ══ PARTÍCULAS HERO ══ */
+(function(){
+  const canvas=document.createElement('canvas');
+  canvas.style.cssText='position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:6;opacity:0;transition:opacity 1s;';
+  document.body.appendChild(canvas);
+  const ctx=canvas.getContext('2d');
+  let W,H;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  resize();
+  window.addEventListener('resize',resize);
+
+  const rand=(a,b)=>a+Math.random()*(b-a);
+  // Partículas grandes y visibles
+  const pts=Array.from({length:140},()=>({
+    x:rand(0,window.innerWidth), y:rand(0,window.innerHeight),
+    r:rand(2,7),
+    vx:rand(-0.2,0.2), vy:rand(-0.9,-0.25),
+    op:rand(0.5,0.92), life:rand(0,1),
+    type:Math.random()>0.5?'cream':'terra'
+  }));
+
+  function updateVisibility(){
+    canvas.style.opacity=window.scrollY<window.innerHeight*0.85?'1':'0';
+  }
+  window.addEventListener('scroll',updateVisibility,{passive:true});
+  updateVisibility();
+
+  (function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.life+=0.005;
+      if(p.life>1){p.life=0;p.x=rand(0,W);p.y=H+10;}
+      const a=p.op*Math.sin(p.life*Math.PI);
+      const color=p.type==='cream'?`rgba(240,232,220,${a})`:`rgba(212,169,160,${a})`;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=color;
+      // Glow suave en las grandes
+      if(p.r>4){ctx.shadowBlur=12;ctx.shadowColor=color;}
+      ctx.fill();
+      ctx.shadowBlur=0;
+      p.x+=p.vx;p.y+=p.vy;
+    });
+    requestAnimationFrame(draw);
+  })();
+})();
+
+/* ══ SOMBRAS ENTRE SECCIONES ══ */
+(function(){
+  const css=`
+    .cream-section::before{
+      content:'';position:absolute;top:-80px;left:0;right:0;height:80px;
+      background:linear-gradient(to bottom,transparent,rgba(61,37,32,0.18));
+      z-index:2;pointer-events:none;
+    }
+    .cream-section::after{
+      content:'';position:absolute;bottom:-80px;left:0;right:0;height:80px;
+      background:linear-gradient(to top,transparent,rgba(61,37,32,0.18));
+      z-index:2;pointer-events:none;
+    }
+    #secQuote::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:100px;
+      background:linear-gradient(to bottom,rgba(61,37,32,0.35),transparent);
+      z-index:1;pointer-events:none;
+    }
+    #secQuote::after{
+      content:'';position:absolute;bottom:0;left:0;right:0;height:100px;
+      background:linear-gradient(to top,rgba(61,37,32,0.35),transparent);
+      z-index:1;pointer-events:none;
+    }
+  `;
+  const s=document.createElement('style');
+  s.textContent=css;
+  document.head.appendChild(s);
+})();
+
 </script>
 </body>
 </html>
